@@ -1,0 +1,58 @@
+.customers-management {
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.customers-management h2 {
+  color: #2c3e50;
+  margin-bottom: 20px;
+}
+
+.search-bar {
+  margin-bottom: 20px;
+}
+
+.search-bar input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.add-customer-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.add-customer-form input {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.add-customer-form button {
+  padding: 10px;
+  background-color: #2c3e50;
+  color: #ecf0f1;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.add-customer-form button:hover {
+  background-color: #34495e;
+}
+
+.customers-list {
+  list-style: none;
+  padding: 0;
+}
+
+.customers-list li {
+  padding: 10px;
+  border-bottom: 1px solid #ccc;
+} 

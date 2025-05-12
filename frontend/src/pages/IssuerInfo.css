@@ -1,0 +1,5 @@
+.issuer-info { padding: 24px; background: #fff; border-radius: 12px; box-shadow: 0 2px 8px #0001; max-width: 600px; margin: auto; }
+.issuer-info h2 { margin-bottom: 24px; }
+.issuer-info input { margin: 8px 0; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; width: 100%; max-width: 350px; display: block; }
+.issuer-info button { margin-top: 16px; padding: 8px 20px; border: none; border-radius: 6px; background: #61dafb; color: #222; font-weight: bold; cursor: pointer; }
+.issuer-info button:hover { background: #21a1f3; color: #fff; }

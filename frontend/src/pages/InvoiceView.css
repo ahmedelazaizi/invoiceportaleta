@@ -1,0 +1,304 @@
+.invoice-view {
+  padding: 20px;
+}
+
+.invoice-view .card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+.invoice-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  margin-bottom: 40px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #eee;
+}
+
+.company-info h1 {
+  color: var(--primary-color);
+  margin: 0 0 10px 0;
+  font-size: 24px;
+}
+
+.company-info p {
+  margin: 5px 0;
+  color: #666;
+}
+
+.invoice-info h2 {
+  color: var(--primary-color);
+  margin: 0 0 10px 0;
+  font-size: 20px;
+}
+
+.invoice-info p {
+  margin: 5px 0;
+  color: #666;
+}
+
+.client-info {
+  margin-bottom: 40px;
+}
+
+.client-info h3 {
+  color: var(--primary-color);
+  margin-bottom: 20px;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.info-item label {
+  color: #666;
+  font-size: 14px;
+}
+
+.info-item span {
+  font-weight: 500;
+}
+
+.items-section {
+  margin-bottom: 40px;
+}
+
+.items-section h3 {
+  color: var(--primary-color);
+  margin-bottom: 20px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 12px;
+  text-align: right;
+  border-bottom: 1px solid #ddd;
+}
+
+.table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.totals-section {
+  background-color: #f8f9fa;
+  padding: 20px;
+  border-radius: 4px;
+  margin-bottom: 40px;
+}
+
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #ddd;
+}
+
+.total-row:last-child {
+  border-bottom: none;
+}
+
+.grand-total {
+  font-size: 1.2em;
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+.notes-section {
+  margin-bottom: 40px;
+}
+
+.notes-section h3 {
+  color: var(--primary-color);
+  margin-bottom: 10px;
+}
+
+.notes-section p {
+  color: #666;
+  line-height: 1.6;
+}
+
+.footer {
+  text-align: center;
+  padding-top: 20px;
+  border-top: 2px solid #eee;
+  color: #666;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-right: 10px;
+}
+
+.status-draft {
+  background-color: #e9ecef;
+  color: #495057;
+}
+
+.status-pending {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.status-approved {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.status-rejected {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-dark);
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background-color: #5a6268;
+}
+
+.btn-success {
+  background-color: var(--success-color);
+  color: white;
+}
+
+.btn-success:hover {
+  background-color: #218838;
+}
+
+.btn-danger {
+  background-color: var(--error-color);
+  color: white;
+}
+
+.btn-danger:hover {
+  background-color: #c82333;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+}
+
+.no-data {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+.alert {
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+.alert-error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+@media print {
+  .header,
+  .actions {
+    display: none;
+  }
+
+  .invoice-view {
+    padding: 0;
+  }
+
+  .invoice-view .card {
+    box-shadow: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .invoice-view {
+    padding: 10px;
+  }
+
+  .invoice-header {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .header {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .actions {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .table {
+    display: block;
+    overflow-x: auto;
+  }
+} 

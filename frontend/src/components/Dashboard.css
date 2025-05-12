@@ -1,0 +1,62 @@
+.dashboard {
+  padding: 30px;
+  background-color: #f4f8fb;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(44, 62, 80, 0.08);
+  max-width: 800px;
+  margin: 40px auto;
+}
+
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  margin-bottom: 30px;
+}
+
+.company-logo {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.08);
+}
+
+.company-info h1 {
+  color: #2c3e50;
+  margin-bottom: 10px;
+  font-size: 2rem;
+}
+
+.company-info p {
+  color: #34495e;
+  margin: 2px 0;
+  font-size: 1.1rem;
+}
+
+.dashboard-message {
+  background: #eaf6ff;
+  border-radius: 8px;
+  padding: 24px;
+  margin-top: 10px;
+  text-align: center;
+}
+
+.dashboard-message h2 {
+  color: #2980b9;
+  margin-bottom: 12px;
+}
+
+.dashboard-message p {
+  color: #2c3e50;
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+}
+
+.dashboard-ad {
+  color: #16a085;
+  font-weight: bold;
+  font-size: 1.15rem;
+  margin-top: 10px;
+} 

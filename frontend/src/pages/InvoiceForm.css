@@ -1,0 +1,275 @@
+/* InvoiceForm.css - تناسق ألوان وتوزيع أعمدة جمالي */
+:root {
+  --primary-color: #2d3e50;
+  --secondary-color: #f5f7fa;
+  --accent-color: #1abc9c;
+  --danger-color: #e74c3c;
+  --border-radius: 8px;
+  --input-bg: #fff;
+  --input-border: #dbe2ef;
+  --input-focus: #1abc9c;
+  --shadow: 0 2px 8px rgba(44, 62, 80, 0.08);
+  --font-family: 'Arial', 'Times New Roman', sans-serif;
+}
+
+.invoice-form {
+  padding: 32px 0 32px 0;
+  background: var(--secondary-color);
+  min-height: 100vh;
+  font-family: var(--font-family);
+}
+
+.card {
+  background: #fff;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  padding: 32px 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.invoice-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.invoice-header h2 {
+  font-size: 2rem;
+  color: var(--primary-color);
+  margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.excel-upload, .template-download {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--accent-color);
+  color: #fff;
+  border: none;
+  border-radius: var(--border-radius);
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background 0.2s;
+}
+
+.excel-upload:hover, .template-download:hover {
+  background: #159c7e;
+}
+
+.alert-error {
+  background: #ffeaea;
+  color: #c0392b;
+  border: 1px solid #e74c3c;
+  border-radius: var(--border-radius);
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  font-size: 1rem;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.form-row {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.form-group {
+  flex: 1 1 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-label {
+  font-weight: bold;
+  color: var(--primary-color);
+  margin-bottom: 2px;
+}
+
+.form-control {
+  padding: 10px 12px;
+  border: 1px solid var(--input-border);
+  border-radius: var(--border-radius);
+  background: var(--input-bg);
+  font-size: 1rem;
+  transition: border 0.2s;
+}
+
+.form-control:focus {
+  border-color: var(--input-focus);
+  outline: none;
+}
+
+.items-section {
+  margin-top: 12px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.section-header h3 {
+  margin: 0;
+  color: var(--primary-color);
+  font-size: 1.2rem;
+}
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fafbfc;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+.table th, .table td {
+  padding: 10px 8px;
+  text-align: center;
+  border-bottom: 1px solid #eaeaea;
+  font-size: 0.98rem;
+}
+
+.table th {
+  background: #f0f4f8;
+  color: var(--primary-color);
+  font-weight: bold;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: var(--border-radius);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-primary {
+  background: var(--primary-color);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: #1a2533;
+}
+
+.btn-danger {
+  background: var(--danger-color);
+  color: #fff;
+}
+
+.btn-danger:hover {
+  background: #c0392b;
+}
+
+.btn-secondary {
+  background: #e0e6ed;
+  color: var(--primary-color);
+}
+
+.btn-secondary:hover {
+  background: #cfd8e3;
+}
+
+.btn-sm {
+  padding: 4px 10px;
+  font-size: 0.95rem;
+}
+
+.totals-section {
+  margin-top: 18px;
+  background: #f7fafc;
+  border-radius: var(--border-radius);
+  padding: 16px 20px;
+  box-shadow: 0 1px 4px rgba(44, 62, 80, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 400px;
+}
+
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.08rem;
+  color: var(--primary-color);
+}
+
+.grand-total {
+  font-weight: bold;
+  color: var(--accent-color);
+  font-size: 1.15rem;
+}
+
+.form-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.loading-spinner {
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid var(--primary-color);
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@media (max-width: 900px) {
+  .card {
+    padding: 18px 6px;
+  }
+  .form-row {
+    gap: 12px;
+  }
+}
+
+@media (max-width: 600px) {
+  .invoice-header {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .form-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .totals-section {
+    max-width: 100%;
+    padding: 10px 6px;
+  }
+}
