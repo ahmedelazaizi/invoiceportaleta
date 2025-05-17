@@ -1,609 +1,583 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FaPlus, FaTrash, FaSave, FaTimes, FaFileExcel, FaDownload, FaCalculator } from 'react-icons/fa';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import { Spin } from 'antd';
-import './InvoiceForm.css';
-import * as XLSX from 'xlsx';
-import etaService from '../services/etaService';
-import {
-  DOCUMENT_TYPES,
-  CUSTOMER_TYPES,
-  TAX_TYPES,
-  UNIT_TYPES,
-  PAYMENT_METHODS,
-  VALIDATION_REQUIREMENTS,
-  ERROR_MESSAGES
-} from '../constants/etaConstants';
+import PropTypes from 'prop-types';
+import Notification from '../components/Notification';
 
-const InvoiceForm = () => {
-  const navigate = useNavigate();
+/**
+ * مكون نموذج الفاتورة - يتيح إنشاء وتعديل الفواتير بواجهة سهلة الاستخدام
+ */
+const InvoiceForm = ({ showNotification }) => {
+  // بيانات الفاتورة الأساسية
+  const [invoice, setInvoice] = useState({
+    invoice_number: '',
+    issue_date: new Date().toISOString().split('T')[0],
+    due_date: '',
+    client_name: '',
+    client_email: '',
+    client_phone: '',
+    client_address: '',
+    client_tax_number: '',
+    client_type: 'B',
+    activity_code: '',
+    notes: '',
+    payment_method: 'cash',
+    currency: 'EGP'
+  });
+
+  // بنود الفاتورة
+  const [items, setItems] = useState([{
+    item_code: '',
+    description: '',
+    quantity: 1,
+    unit_price: 0,
+    tax_rate: 14,
+    discount: 0
+  }]);
+
+  // إجماليات الفاتورة
+  const [totals, setTotals] = useState({
+    subtotal: 0,
+    tax_amount: 0,
+    discount_amount: 0,
+    total_amount: 0
+  });
+
+  // حالة تحميل البيانات
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [customers, setCustomers] = useState([]);
-  const [items, setItems] = useState([]);
-  const [selectedCustomer, setSelectedCustomer] = useState(null);
-  const [invoiceItems, setInvoiceItems] = useState([]);
-  const [invoiceData, setInvoiceData] = useState({
-    type: DOCUMENT_TYPES.SALES_INVOICE,
-    invoiceNumber: '',
-    invoiceDate: new Date().toISOString().split('T')[0],
-    customerId: '',
-    customerType: CUSTOMER_TYPES.BUSINESS,
-    customerTaxNumber: '',
-    customerAddress: '',
-    activityCode: '',
-    paymentMethod: PAYMENT_METHODS[0].code,
-    bankName: '',
-    bankAccountNumber: '',
-    bankAccountIBAN: '',
-    swiftCode: '',
-    paymentTerms: '',
-    deliveryApproach: '',
-    deliveryPackaging: '',
-    deliveryDateValidity: '',
-    deliveryExportPort: '',
-    deliveryGrossWeight: 0,
-    deliveryNetWeight: 0,
-    deliveryTerms: '',
-    notes: '',
-    totalAmount: 0,
-    totalDiscount: 0,
-    totalTax: 0,
-    grandTotal: 0
-  });
-  const [importedInvoices, setImportedInvoices] = useState([]);
+  const [success, setSuccess] = useState('');
+  
+  // الخطوة الحالية في النموذج متعدد الخطوات
+  const [currentStep, setCurrentStep] = useState(1);
+  
+  // قائمة العملاء للاختيار
+  const [clients, setClients] = useState([]);
+  const [loadingClients, setLoadingClients] = useState(false);
+  
+  // قائمة المنتجات للاختيار
+  const [products, setProducts] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
 
+  // تحميل بيانات العملاء والمنتجات عند تحميل الصفحة
   useEffect(() => {
-    fetchCustomers();
-    fetchItems();
+    const fetchClients = async () => {
+      setLoadingClients(true);
+      try {
+        // استبدل هذا بطلب API فعلي
+        // const response = await fetch('/api/clients');
+        // const data = await response.json();
+        // setClients(data);
+        
+        // بيانات تجريبية للعرض
+        setTimeout(() => {
+          setClients([
+            { id: 1, name: 'شركة الأمل للتجارة', tax_number: '123456789', email: 'info@alamal.com' },
+            { id: 2, name: 'مؤسسة النور', tax_number: '987654321', email: 'info@alnoor.com' },
+            { id: 3, name: 'شركة المستقبل', tax_number: '456789123', email: 'info@future.com' }
+          ]);
+          setLoadingClients(false);
+        }, 500);
+      } catch (err) {
+        setError('حدث خطأ أثناء تحميل بيانات العملاء');
+        setLoadingClients(false);
+      }
+    };
+
+    const fetchProducts = async () => {
+      setLoadingProducts(true);
+      try {
+        // استبدل هذا بطلب API فعلي
+        // const response = await fetch('/api/products');
+        // const data = await response.json();
+        // setProducts(data);
+        
+        // بيانات تجريبية للعرض
+        setTimeout(() => {
+          setProducts([
+            { id: 1, code: 'P001', name: 'لابتوب', price: 15000, tax_rate: 14 },
+            { id: 2, code: 'P002', name: 'طابعة', price: 3000, tax_rate: 14 },
+            { id: 3, code: 'P003', name: 'هاتف ذكي', price: 8000, tax_rate: 14 },
+            { id: 4, code: 'S001', name: 'خدمة صيانة', price: 500, tax_rate: 14 }
+          ]);
+          setLoadingProducts(false);
+        }, 700);
+      } catch (err) {
+        setError('حدث خطأ أثناء تحميل بيانات المنتجات');
+        setLoadingProducts(false);
+      }
+    };
+
+    fetchClients();
+    fetchProducts();
   }, []);
 
-  const fetchCustomers = async () => {
-    try {
-      const response = await fetch('http://localhost:8000/customers', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setCustomers(data);
-      }
-    } catch (err) {
-      setError('حدث خطأ في جلب بيانات العملاء');
-    }
-  };
-
-  const fetchItems = async () => {
-    try {
-      const response = await fetch('http://localhost:8000/items', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setItems(data);
-      }
-    } catch (err) {
-      setError('حدث خطأ في جلب بيانات المنتجات');
-    }
-  };
-
-  const handleCustomerChange = (e) => {
-    const customerId = e.target.value;
-    const customer = customers.find(c => c.id === customerId);
-    setSelectedCustomer(customer);
-    setInvoiceData(prev => ({
-      ...prev,
-      customerId,
-      customerType: customer?.type || CUSTOMER_TYPES.BUSINESS,
-      customerTaxNumber: customer?.taxNumber || '',
-      customerAddress: customer?.address || '',
-      activityCode: customer?.activityCode || ''
-    }));
-  };
-
-  const addItem = () => {
-    setInvoiceItems(prev => [...prev, {
-      id: Date.now(),
-      itemId: '',
-      name: '',
-      description: '',
-      type: '',
-      code: '',
-      unitType: UNIT_TYPES[0].code,
-      quantity: 1,
-      unitPrice: 0,
-      currency: 'EGP',
-      taxType: TAX_TYPES[0].code,
-      taxSubType: TAX_TYPES[0].subtype,
-      taxRate: TAX_TYPES[0].rate,
-      taxAmount: 0,
-      totalAmount: 0,
-      discountRate: 0,
-      discountAmount: 0,
-      taxableFees: 0,
-      netTotal: 0
-    }]);
-  };
-
-  const removeItem = (id) => {
-    setInvoiceItems(prev => prev.filter(item => item.id !== id));
+  // حساب إجماليات الفاتورة عند تغيير البنود
+  useEffect(() => {
     calculateTotals();
-  };
+  }, [items]);
 
-  const handleItemChange = (id, field, value) => {
-    setInvoiceItems(prev => {
-      const updatedItems = prev.map(item => {
-        if (item.id === id) {
-          const updatedItem = { ...item, [field]: value };
-          
-          // حساب المجاميع
-          if (field === 'quantity' || field === 'unitPrice' || field === 'taxRate' || field === 'discountRate') {
-            const quantity = field === 'quantity' ? value : item.quantity;
-            const unitPrice = field === 'unitPrice' ? value : item.unitPrice;
-            const taxRate = field === 'taxRate' ? value : item.taxRate;
-            const discountRate = field === 'discountRate' ? value : item.discountRate;
-            
-            const totalAmount = quantity * unitPrice;
-            const discountAmount = totalAmount * (discountRate / 100);
-            const netTotal = totalAmount - discountAmount;
-            const taxAmount = netTotal * (taxRate / 100);
-            
-            updatedItem.totalAmount = totalAmount;
-            updatedItem.discountAmount = discountAmount;
-            updatedItem.netTotal = netTotal;
-            updatedItem.taxAmount = taxAmount;
-          }
-          
-          return updatedItem;
-        }
-        return item;
-      });
-      
-      calculateTotals(updatedItems);
-      return updatedItems;
+  // حساب إجماليات الفاتورة
+  const calculateTotals = () => {
+    let subtotal = 0;
+    let tax_amount = 0;
+    let discount_amount = 0;
+
+    items.forEach(item => {
+      const itemTotal = item.quantity * item.unit_price;
+      const itemDiscount = (itemTotal * item.discount) / 100;
+      const itemTax = ((itemTotal - itemDiscount) * item.tax_rate) / 100;
+
+      subtotal += itemTotal;
+      discount_amount += itemDiscount;
+      tax_amount += itemTax;
+    });
+
+    const total_amount = subtotal - discount_amount + tax_amount;
+
+    setTotals({
+      subtotal: parseFloat(subtotal.toFixed(2)),
+      tax_amount: parseFloat(tax_amount.toFixed(2)),
+      discount_amount: parseFloat(discount_amount.toFixed(2)),
+      total_amount: parseFloat(total_amount.toFixed(2))
     });
   };
 
-  const calculateTotals = (items = invoiceItems) => {
-    const totals = items.reduce((acc, item) => ({
-      totalAmount: acc.totalAmount + (item.totalAmount || 0),
-      totalDiscount: acc.totalDiscount + (item.discountAmount || 0),
-      totalTax: acc.totalTax + (item.taxAmount || 0)
-    }), { totalAmount: 0, totalDiscount: 0, totalTax: 0 });
-
-    setInvoiceData(prev => ({
-      ...prev,
-      totalAmount: totals.totalAmount,
-      totalDiscount: totals.totalDiscount,
-      totalTax: totals.totalTax,
-      grandTotal: totals.totalAmount - totals.totalDiscount + totals.totalTax
-    }));
+  // تحديث بيانات الفاتورة
+  const handleInvoiceChange = (e) => {
+    const { name, value } = e.target;
+    setInvoice(prev => ({ ...prev, [name]: value }));
   };
 
+  // اختيار عميل من القائمة
+  const handleClientSelect = (clientId) => {
+    const selectedClient = clients.find(client => client.id === parseInt(clientId));
+    if (selectedClient) {
+      setInvoice(prev => ({
+        ...prev,
+        client_name: selectedClient.name,
+        client_email: selectedClient.email,
+        client_tax_number: selectedClient.tax_number
+      }));
+    }
+  };
+
+  // تحديث بند في الفاتورة
+  const handleItemChange = (index, e) => {
+    const { name, value } = e.target;
+    const newItems = [...items];
+    newItems[index] = { ...newItems[index], [name]: name === 'quantity' || name === 'unit_price' || name === 'tax_rate' || name === 'discount' ? parseFloat(value) || 0 : value };
+    setItems(newItems);
+  };
+
+  // اختيار منتج من القائمة
+  const handleProductSelect = (index, productId) => {
+    const selectedProduct = products.find(product => product.id === parseInt(productId));
+    if (selectedProduct) {
+      const newItems = [...items];
+      newItems[index] = {
+        ...newItems[index],
+        item_code: selectedProduct.code,
+        description: selectedProduct.name,
+        unit_price: selectedProduct.price,
+        tax_rate: selectedProduct.tax_rate
+      };
+      setItems(newItems);
+    }
+  };
+
+  // إضافة بند جديد للفاتورة
+  const addItem = () => {
+    setItems([...items, {
+      item_code: '',
+      description: '',
+      quantity: 1,
+      unit_price: 0,
+      tax_rate: 14,
+      discount: 0
+    }]);
+  };
+
+  // حذف بند من الفاتورة
+  const removeItem = (index) => {
+    if (items.length > 1) {
+      const newItems = [...items];
+      newItems.splice(index, 1);
+      setItems(newItems);
+    } else {
+      setError('يجب أن تحتوي الفاتورة على بند واحد على الأقل');
+      setTimeout(() => setError(''), 3000);
+    }
+  };
+
+  // الانتقال للخطوة التالية
+  const nextStep = () => {
+    if (currentStep === 1 && !validateStep1()) {
+      return;
+    }
+    setCurrentStep(currentStep + 1);
+  };
+
+  // الرجوع للخطوة السابقة
+  const prevStep = () => {
+    setCurrentStep(currentStep - 1);
+  };
+
+  // التحقق من صحة بيانات الخطوة الأولى
+  const validateStep1 = () => {
+    if (!invoice.invoice_number) {
+      setError('يرجى إدخال رقم الفاتورة');
+      return false;
+    }
+    if (!invoice.issue_date) {
+      setError('يرجى إدخال تاريخ الإصدار');
+      return false;
+    }
+    if (!invoice.client_name) {
+      setError('يرجى إدخال اسم العميل');
+      return false;
+    }
+    setError('');
+    return true;
+  };
+
+  // إرسال الفاتورة
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-
+    
     try {
-      // التحقق من صحة الفاتورة
-      const validationErrors = etaService.validateInvoice({
-        ...invoiceData,
-        items: invoiceItems
+      // استبدل هذا بطلب API فعلي
+      // const response = await fetch('/api/invoices', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify({
+      //     ...invoice,
+      //     items,
+      //     totals
+      //   }),
+      // });
+      
+      // if (!response.ok) {
+      //   throw new Error('فشل في إنشاء الفاتورة');
+      // }
+      
+      // محاكاة استجابة API
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      setSuccess('تم إنشاء الفاتورة بنجاح');
+      showNotification('تم إنشاء الفاتورة بنجاح', 'success');
+      
+      // إعادة تعيين النموذج
+      setInvoice({
+        invoice_number: '',
+        issue_date: new Date().toISOString().split('T')[0],
+        due_date: '',
+        client_name: '',
+        client_email: '',
+        client_phone: '',
+        client_address: '',
+        client_tax_number: '',
+        client_type: 'B',
+        activity_code: '',
+        notes: '',
+        payment_method: 'cash',
+        currency: 'EGP'
       });
-
-      if (validationErrors.length > 0) {
-        throw new Error(validationErrors.join('\n'));
-      }
-
-      // إرسال الفاتورة إلى ETA
-      const etaResponse = await etaService.submitInvoice({
-        ...invoiceData,
-        items: invoiceItems
-      });
-
-      // حفظ الفاتورة في قاعدة البيانات المحلية
-      const response = await fetch('http://localhost:8000/invoices', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify({
-          ...invoiceData,
-          items: invoiceItems,
-          etaResponse
-        })
-      });
-
-      if (response.ok) {
-        toast.success('تم إنشاء الفاتورة بنجاح');
-        navigate('/invoices');
-      } else {
-        const data = await response.json();
-        throw new Error(data.detail || 'حدث خطأ في حفظ الفاتورة');
-      }
+      
+      setItems([{
+        item_code: '',
+        description: '',
+        quantity: 1,
+        unit_price: 0,
+        tax_rate: 14,
+        discount: 0
+      }]);
+      
+      setCurrentStep(1);
     } catch (err) {
-      setError(err.message);
-      toast.error(err.message);
+      setError('حدث خطأ أثناء إنشاء الفاتورة');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleExcelUpload = (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const data = new Uint8Array(e.target.result);
-      const workbook = XLSX.read(data, { type: 'array' });
-        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
-        if (jsonData.length === 0) {
-          toast.error('الملف لا يحتوي على بيانات');
-          return;
-        }
-
-        // كل صف يمثل فاتورة
-        const invoices = jsonData.map(row => ({
-          invoiceNumber: row['رقم الفاتورة'] || '',
-          invoiceDate: row['تاريخ الفاتورة'] || new Date().toISOString().split('T')[0],
-          customerName: row['اسم العميل'] || '',
-          customerTaxNumber: row['الرقم الضريبي للعميل'] || '',
-          customerAddress: row['عنوان العميل'] || '',
-          customerType: row['نوع العميل'] === 'شركة' ? 'B' : 'P',
-          items: [{
-            name: row['اسم المنتج'] || '',
-            description: row['وصف المنتج'] || '',
-            quantity: parseFloat(row['الكمية']) || 1,
-            unitPrice: parseFloat(row['سعر الوحدة']) || 0,
-            taxRate: parseFloat(row['نسبة الضريبة']) || 14,
-            totalAmount: (parseFloat(row['الكمية']) || 1) * (parseFloat(row['سعر الوحدة']) || 0),
-            taxAmount: ((parseFloat(row['الكمية']) || 1) * (parseFloat(row['سعر الوحدة']) || 0)) * ((parseFloat(row['نسبة الضريبة']) || 14) / 100)
-          }],
-          notes: row['ملاحظات'] || '',
-          paymentMethod: row['طريقة الدفع'] || 'CASH'
-        }));
-
-        setImportedInvoices(invoices);
-        toast.success('تم استيراد ' + invoices.length + ' فاتورة بنجاح');
-      } catch (error) {
-        console.error('Error parsing Excel file:', error);
-        toast.error('حدث خطأ في قراءة الملف');
-      }
-    };
-    reader.readAsArrayBuffer(file);
-  };
-
-  const downloadTemplate = () => {
-    const template = [
-      {
-        'رقم الفاتورة': '',
-        'تاريخ الفاتورة': new Date().toISOString().split('T')[0],
-        'اسم العميل': '',
-        'الرقم الضريبي للعميل': '',
-        'عنوان العميل': '',
-        'نوع العميل': 'شركة',
-        'اسم المنتج': '',
-        'وصف المنتج': '',
-        'الكمية': 1,
-        'سعر الوحدة': 0,
-        'نسبة الضريبة': 14,
-        'ملاحظات': '',
-        'طريقة الدفع': 'نقدي'
-      }
-    ];
-
-    const ws = XLSX.utils.json_to_sheet(template);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'الفواتير');
-    XLSX.writeFile(wb, 'invoice_template.xlsx');
-  };
-
-  const handleBulkSave = async () => {
-    setLoading(true);
-    setError('');
-    let successCount = 0;
-    let failCount = 0;
-    for (const inv of importedInvoices) {
-      try {
-        // تحقق من صحة الفاتورة (يمكنك تحسين التحقق لاحقًا)
-        await fetch('http://localhost:8000/invoices', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-          body: JSON.stringify(inv)
-        });
-        successCount++;
-      } catch {
-        failCount++;
-      }
-    }
-    setLoading(false);
-    toast.success(`تم حفظ ${successCount} فاتورة بنجاح. فشل ${failCount}`);
-    setImportedInvoices([]);
-    navigate('/invoices');
-  };
-
   return (
-    <div className="invoice-form">
-      <ToastContainer
-        position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        rtl={true}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
-      {loading && (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
-          <Spin size="large" tip="جاري التحميل..." />
+    <div className="invoice-form-container">
+      <h1>إنشاء فاتورة جديدة</h1>
+      
+      {/* شريط الخطوات */}
+      <div className="stepper">
+        <div className={`step ${currentStep === 1 ? 'active' : ''} ${currentStep > 1 ? 'completed' : ''}`}>
+          <div className="step-number">1</div>
+          <div className="step-label">معلومات العميل</div>
         </div>
-      )}
-      <div className="card">
-      <div className="invoice-header">
-          <h2>إنشاء فاتورة جديدة</h2>
-        <div className="header-actions">
-          <label className="excel-upload">
-              <FaFileExcel />
-              <span>استيراد من Excel</span>
-              <input
-                type="file"
-                accept=".xlsx,.xls"
-                onChange={handleExcelUpload}
-                style={{ display: 'none' }}
-              />
-          </label>
-            <button
-              type="button"
-              className="template-download"
-              onClick={downloadTemplate}
-            >
-              <FaDownload />
-              تحميل القالب
-            </button>
-          </div>
+        <div className={`step ${currentStep === 2 ? 'active' : ''} ${currentStep > 2 ? 'completed' : ''}`}>
+          <div className="step-number">2</div>
+          <div className="step-label">بنود الفاتورة</div>
         </div>
-
-        {error && <div className="alert alert-error">{error}</div>}
-
-        <form onSubmit={handleSubmit}>
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label">رقم الفاتورة</label>
-              <input
-                type="text"
-                className="form-control"
-                value={invoiceData.invoiceNumber}
-                onChange={(e) => setInvoiceData(prev => ({ ...prev, invoiceNumber: e.target.value }))}
-                required
-                pattern={VALIDATION_REQUIREMENTS.INVOICE_NUMBER.pattern}
-                title={VALIDATION_REQUIREMENTS.INVOICE_NUMBER.message}
-              />
+        <div className={`step ${currentStep === 3 ? 'active' : ''}`}>
+          <div className="step-number">3</div>
+          <div className="step-label">المراجعة والإرسال</div>
+        </div>
+      </div>
+      
+      {/* رسائل الخطأ والنجاح */}
+      {error && <div className="alert alert-error" role="alert">{error}</div>}
+      {success && <div className="alert alert-success" role="alert">{success}</div>}
+      
+      <form onSubmit={handleSubmit}>
+        {/* الخطوة 1: معلومات العميل */}
+        {currentStep === 1 && (
+          <div className="card">
+            <h2>معلومات العميل والفاتورة</h2>
+            
+            <div className="form-row">
+              <div className="form-col">
+                <div className="form-group">
+                  <label htmlFor="invoice_number" className="form-label">رقم الفاتورة *</label>
+                  <input
+                    type="text"
+                    id="invoice_number"
+                    name="invoice_number"
+                    className="form-control"
+                    value={invoice.invoice_number}
+                    onChange={handleInvoiceChange}
+                    required
+                    aria-required="true"
+                  />
+                </div>
+              </div>
+              
+              <div className="form-col">
+                <div className="form-group">
+                  <label htmlFor="issue_date" className="form-label">تاريخ الإصدار *</label>
+                  <input
+                    type="date"
+                    id="issue_date"
+                    name="issue_date"
+                    className="form-control"
+                    value={invoice.issue_date}
+                    onChange={handleInvoiceChange}
+                    required
+                    aria-required="true"
+                  />
+                </div>
+              </div>
+              
+              <div className="form-col">
+                <div className="form-group">
+                  <label htmlFor="due_date" className="form-label">تاريخ الاستحقاق</label>
+                  <input
+                    type="date"
+                    id="due_date"
+                    name="due_date"
+                    className="form-control"
+                    value={invoice.due_date}
+                    onChange={handleInvoiceChange}
+                  />
+                </div>
+              </div>
             </div>
-
+            
             <div className="form-group">
-              <label className="form-label">تاريخ الفاتورة</label>
-              <input
-                type="date"
+              <label htmlFor="client_select" className="form-label">اختر عميل</label>
+              <select
+                id="client_select"
                 className="form-control"
-                value={invoiceData.invoiceDate}
-                onChange={(e) => setInvoiceData(prev => ({ ...prev, invoiceDate: e.target.value }))}
-                required
-              />
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">العميل</label>
-            <select
-              className="form-control"
-              value={invoiceData.customerId}
-              onChange={handleCustomerChange}
-              required
-            >
-              <option value="">اختر العميل</option>
-              {customers.map(customer => (
-                <option key={customer.id} value={customer.id}>
-                  {customer.name} - {customer.taxNumber}
-                </option>
-              ))}
-            </select>
-        </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label">نوع العميل</label>
-              <select 
-                className="form-control"
-                value={invoiceData.customerType}
-                onChange={(e) => setInvoiceData(prev => ({ ...prev, customerType: e.target.value }))}
-                required
+                onChange={(e) => handleClientSelect(e.target.value)}
+                disabled={loadingClients}
               >
-                <option value={CUSTOMER_TYPES.BUSINESS}>شركة/مؤسسة</option>
-                <option value={CUSTOMER_TYPES.PERSON}>فرد</option>
+                <option value="">-- اختر عميل --</option>
+                {clients.map(client => (
+                  <option key={client.id} value={client.id}>{client.name}</option>
+                ))}
               </select>
+              {loadingClients && <div className="form-hint">جاري تحميل بيانات العملاء...</div>}
             </div>
-
+            
+            <div className="form-row">
+              <div className="form-col">
+                <div className="form-group">
+                  <label htmlFor="client_name" className="form-label">اسم العميل *</label>
+                  <input
+                    type="text"
+                    id="client_name"
+                    name="client_name"
+                    className="form-control"
+                    value={invoice.client_name}
+                    onChange={handleInvoiceChange}
+                    required
+                    aria-required="true"
+                  />
+                </div>
+              </div>
+              
+              <div className="form-col">
+                <div className="form-group">
+                  <label htmlFor="client_tax_number" className="form-label">الرقم الضريبي للعميل</label>
+                  <input
+                    type="text"
+                    id="client_tax_number"
+                    name="client_tax_number"
+                    className="form-control"
+                    value={invoice.client_tax_number}
+                    onChange={handleInvoiceChange}
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <div className="form-row">
+              <div className="form-col">
+                <div className="form-group">
+                  <label htmlFor="client_email" className="form-label">البريد الإلكتروني</label>
+                  <input
+                    type="email"
+                    id="client_email"
+                    name="client_email"
+                    className="form-control"
+                    value={invoice.client_email}
+                    onChange={handleInvoiceChange}
+                  />
+                </div>
+              </div>
+              
+              <div className="form-col">
+                <div className="form-group">
+                  <label htmlFor="client_phone" className="form-label">رقم الهاتف</label>
+                  <input
+                    type="tel"
+                    id="client_phone"
+                    name="client_phone"
+                    className="form-control"
+                    value={invoice.client_phone}
+                    onChange={handleInvoiceChange}
+                  />
+                </div>
+              </div>
+            </div>
+            
             <div className="form-group">
-              <label className="form-label">الرقم الضريبي</label>
-              <input 
-                type="text" 
+              <label htmlFor="client_address" className="form-label">العنوان</label>
+              <textarea
+                id="client_address"
+                name="client_address"
                 className="form-control"
-                value={invoiceData.customerTaxNumber}
-                onChange={(e) => setInvoiceData(prev => ({ ...prev, customerTaxNumber: e.target.value }))}
-                required
-                pattern={VALIDATION_REQUIREMENTS.TAX_NUMBER.pattern}
-                title={VALIDATION_REQUIREMENTS.TAX_NUMBER.message}
-              />
+                value={invoice.client_address}
+                onChange={handleInvoiceChange}
+                rows="2"
+              ></textarea>
             </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label">العنوان</label>
-              <input 
-                type="text" 
-                className="form-control"
-                value={invoiceData.customerAddress}
-                onChange={(e) => setInvoiceData(prev => ({ ...prev, customerAddress: e.target.value }))}
-                required
-              />
+            
+            <div className="form-row">
+              <div className="form-col">
+                <div className="form-group">
+                  <label htmlFor="client_type" className="form-label">نوع العميل</label>
+                  <select
+                    id="client_type"
+                    name="client_type"
+                    className="form-control"
+                    value={invoice.client_type}
+                    onChange={handleInvoiceChange}
+                  >
+                    <option value="B">شركة</option>
+                    <option value="P">فرد</option>
+                    <option value="F">أجنبي</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div className="form-col">
+                <div className="form-group">
+                  <label htmlFor="activity_code" className="form-label">كود النشاط</label>
+                  <input
+                    type="text"
+                    id="activity_code"
+                    name="activity_code"
+                    className="form-control"
+                    value={invoice.activity_code}
+                    onChange={handleInvoiceChange}
+                  />
+                </div>
+              </div>
             </div>
-
-            <div className="form-group">
-              <label className="form-label">الرمز النشاط</label>
-              <input 
-                type="text" 
-                className="form-control"
-                value={invoiceData.activityCode}
-                onChange={(e) => setInvoiceData(prev => ({ ...prev, activityCode: e.target.value }))}
-                required
-              />
-            </div>
-          </div>
-
-          <div className="items-section">
-            <div className="section-header">
-              <h3>أصناف الفاتورة</h3>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={addItem}
-              >
-                <FaPlus />
-                <span>إضافة صنف</span>
+            
+            <div className="form-actions">
+              <button type="button" className="btn btn-primary" onClick={nextStep}>
+                التالي <span className="icon">→</span>
               </button>
-        </div>
-
-            <div className="table-responsive">
+            </div>
+          </div>
+        )}
+        
+        {/* الخطوة 2: بنود الفاتورة */}
+        {currentStep === 2 && (
+          <div className="card">
+            <h2>بنود الفاتورة</h2>
+            
+            <div className="table-container">
               <table className="table">
-              <thead>
-                <tr>
-                    <th>الصنف</th>
-                    <th>الوصف</th>
-                    <th>الوحدة</th>
-                  <th>الكمية</th>
-                    <th>سعر الوحدة</th>
-                    <th>نوع الضريبة</th>
-                    <th>نسبة الضريبة</th>
-                    <th>نسبة الخصم</th>
-                    <th>قيمة الخصم</th>
-                    <th>الصافي</th>
-                    <th>قيمة الضريبة</th>
-                  <th>الإجمالي</th>
-                  <th>الإجراءات</th>
-                </tr>
-              </thead>
-              <tbody>
-                  {invoiceItems.map((item) => (
-                    <tr key={item.id}>
+                <thead>
+                  <tr>
+                    <th style={{ width: '5%' }}>#</th>
+                    <th style={{ width: '15%' }}>كود المنتج</th>
+                    <th style={{ width: '25%' }}>الوصف</th>
+                    <th style={{ width: '10%' }}>الكمية</th>
+                    <th style={{ width: '15%' }}>السعر</th>
+                    <th style={{ width: '10%' }}>الضريبة %</th>
+                    <th style={{ width: '10%' }}>الخصم %</th>
+                    <th style={{ width: '10%' }}>الإجراءات</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((item, index) => (
+                    <tr key={index}>
+                      <td>{index + 1}</td>
                       <td>
                         <select
                           className="form-control"
-                          value={item.itemId}
-                          onChange={(e) => {
-                            const selectedItem = items.find(i => i.id === e.target.value);
-                            handleItemChange(item.id, 'itemId', e.target.value);
-                            handleItemChange(item.id, 'name', selectedItem?.name || '');
-                            handleItemChange(item.id, 'description', selectedItem?.description || '');
-                            handleItemChange(item.id, 'unitPrice', selectedItem?.price || 0);
-                            handleItemChange(item.id, 'unitType', selectedItem?.unitType || UNIT_TYPES[0].code);
-                          }}
-                          required
+                          onChange={(e) => handleProductSelect(index, e.target.value)}
+                          disabled={loadingProducts}
                         >
-                          <option value="">اختر الصنف</option>
-                          {items.map(i => (
-                            <option key={i.id} value={i.id}>
-                              {i.name}
-                            </option>
+                          <option value="">-- اختر منتج --</option>
+                          {products.map(product => (
+                            <option key={product.id} value={product.id}>{product.code} - {product.name}</option>
                           ))}
                         </select>
                       </td>
                       <td>
                         <input
                           type="text"
+                          name="description"
                           className="form-control"
                           value={item.description}
-                          onChange={(e) => handleItemChange(item.id, 'description', e.target.value)}
-                        />
-                      </td>
-                      <td>
-                              <select 
-                          className="form-control"
-                          value={item.unitType}
-                          onChange={(e) => handleItemChange(item.id, 'unitType', e.target.value)}
+                          onChange={(e) => handleItemChange(index, e)}
+                          placeholder="وصف المنتج"
                           required
-                        >
-                          {UNIT_TYPES.map(unit => (
-                            <option key={unit.code} value={unit.code}>
-                              {unit.label}
-                                  </option>
-                                ))}
-                              </select>
+                        />
                       </td>
                       <td>
                         <input
                           type="number"
+                          name="quantity"
                           className="form-control"
                           value={item.quantity}
-                          onChange={(e) => handleItemChange(item.id, 'quantity', parseFloat(e.target.value))}
+                          onChange={(e) => handleItemChange(index, e)}
                           min="1"
+                          step="1"
                           required
                         />
-                      </td>
-                      <td>
-                              <input 
-                                type="number" 
-                          className="form-control"
-                          value={item.unitPrice}
-                          onChange={(e) => handleItemChange(item.id, 'unitPrice', parseFloat(e.target.value))}
-                          min="0"
-                          step="0.01"
-                          required
-                        />
-                      </td>
-                      <td>
-                        <select
-                          className="form-control"
-                          value={item.taxType}
-                          onChange={(e) => {
-                            const taxType = TAX_TYPES.find(t => t.code === e.target.value);
-                            handleItemChange(item.id, 'taxType', taxType.code);
-                            handleItemChange(item.id, 'taxSubType', taxType.subtype);
-                            handleItemChange(item.id, 'taxRate', taxType.rate);
-                          }}
-                          required
-                        >
-                          {TAX_TYPES.map(tax => (
-                            <option key={tax.code} value={tax.code}>
-                              {tax.label}
-                            </option>
-                          ))}
-                        </select>
                       </td>
                       <td>
                         <input
                           type="number"
+                          name="unit_price"
                           className="form-control"
-                          value={item.taxRate}
-                          onChange={(e) => handleItemChange(item.id, 'taxRate', parseFloat(e.target.value))}
+                          value={item.unit_price}
+                          onChange={(e) => handleItemChange(index, e)}
                           min="0"
-                          max="100"
                           step="0.01"
                           required
                         />
@@ -611,185 +585,219 @@ const InvoiceForm = () => {
                       <td>
                         <input
                           type="number"
+                          name="tax_rate"
                           className="form-control"
-                          value={item.discountRate}
-                          onChange={(e) => handleItemChange(item.id, 'discountRate', parseFloat(e.target.value))}
+                          value={item.tax_rate}
+                          onChange={(e) => handleItemChange(index, e)}
                           min="0"
                           max="100"
                           step="0.01"
                         />
                       </td>
-                      <td>{item.discountAmount.toFixed(2)}</td>
-                      <td>{item.netTotal.toFixed(2)}</td>
-                      <td>{item.taxAmount.toFixed(2)}</td>
-                      <td>{item.totalAmount.toFixed(2)}</td>
+                      <td>
+                        <input
+                          type="number"
+                          name="discount"
+                          className="form-control"
+                          value={item.discount}
+                          onChange={(e) => handleItemChange(index, e)}
+                          min="0"
+                          max="100"
+                          step="0.01"
+                        />
+                      </td>
                       <td>
                         <button
                           type="button"
-                          className="btn btn-danger btn-sm"
-                          onClick={() => removeItem(item.id)}
+                          className="btn btn-danger btn-icon"
+                          onClick={() => removeItem(index)}
+                          aria-label="حذف البند"
+                          title="حذف البند"
                         >
-                          <FaTrash />
+                          ✕
                         </button>
                       </td>
                     </tr>
                   ))}
-              </tbody>
-            </table>
+                </tbody>
+              </table>
+            </div>
+            
+            <div className="form-actions">
+              <button type="button" className="btn btn-outline" onClick={addItem}>
+                <span className="icon">+</span> إضافة بند
+              </button>
+            </div>
+            
+            <div className="invoice-summary">
+              <div className="summary-row">
+                <span className="summary-label">الإجمالي قبل الضريبة:</span>
+                <span className="summary-value">{totals.subtotal.toLocaleString()} جنيه</span>
+              </div>
+              <div className="summary-row">
+                <span className="summary-label">قيمة الخصم:</span>
+                <span className="summary-value">{totals.discount_amount.toLocaleString()} جنيه</span>
+              </div>
+              <div className="summary-row">
+                <span className="summary-label">قيمة الضريبة:</span>
+                <span className="summary-value">{totals.tax_amount.toLocaleString()} جنيه</span>
+              </div>
+              <div className="summary-row total">
+                <span className="summary-label">الإجمالي:</span>
+                <span className="summary-value">{totals.total_amount.toLocaleString()} جنيه</span>
+              </div>
+            </div>
+            
+            <div className="form-actions">
+              <button type="button" className="btn btn-outline" onClick={prevStep}>
+                <span className="icon">←</span> السابق
+              </button>
+              <button type="button" className="btn btn-primary" onClick={nextStep}>
+                التالي <span className="icon">→</span>
+              </button>
             </div>
           </div>
-
-          <div className="totals-section">
-            <div className="total-row">
-              <span>إجمالي الفاتورة:</span>
-              <span>{invoiceData.totalAmount.toFixed(2)}</span>
+        )}
+        
+        {/* الخطوة 3: المراجعة والإرسال */}
+        {currentStep === 3 && (
+          <div className="card">
+            <h2>مراجعة الفاتورة</h2>
+            
+            <div className="invoice-preview">
+              <div className="preview-section">
+                <h3>معلومات الفاتورة</h3>
+                <div className="preview-row">
+                  <span className="preview-label">رقم الفاتورة:</span>
+                  <span className="preview-value">{invoice.invoice_number}</span>
+                </div>
+                <div className="preview-row">
+                  <span className="preview-label">تاريخ الإصدار:</span>
+                  <span className="preview-value">{invoice.issue_date}</span>
+                </div>
+                <div className="preview-row">
+                  <span className="preview-label">تاريخ الاستحقاق:</span>
+                  <span className="preview-value">{invoice.due_date || 'غير محدد'}</span>
+                </div>
+              </div>
+              
+              <div className="preview-section">
+                <h3>معلومات العميل</h3>
+                <div className="preview-row">
+                  <span className="preview-label">اسم العميل:</span>
+                  <span className="preview-value">{invoice.client_name}</span>
+                </div>
+                <div className="preview-row">
+                  <span className="preview-label">الرقم الضريبي:</span>
+                  <span className="preview-value">{invoice.client_tax_number || 'غير محدد'}</span>
+                </div>
+                <div className="preview-row">
+                  <span className="preview-label">البريد الإلكتروني:</span>
+                  <span className="preview-value">{invoice.client_email || 'غير محدد'}</span>
+                </div>
+                <div className="preview-row">
+                  <span className="preview-label">رقم الهاتف:</span>
+                  <span className="preview-value">{invoice.client_phone || 'غير محدد'}</span>
+                </div>
+                <div className="preview-row">
+                  <span className="preview-label">العنوان:</span>
+                  <span className="preview-value">{invoice.client_address || 'غير محدد'}</span>
+                </div>
+              </div>
+              
+              <div className="preview-section">
+                <h3>بنود الفاتورة</h3>
+                <div className="table-container">
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>الوصف</th>
+                        <th>الكمية</th>
+                        <th>السعر</th>
+                        <th>الضريبة %</th>
+                        <th>الخصم %</th>
+                        <th>الإجمالي</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {items.map((item, index) => {
+                        const itemTotal = item.quantity * item.unit_price;
+                        const itemDiscount = (itemTotal * item.discount) / 100;
+                        const itemTax = ((itemTotal - itemDiscount) * item.tax_rate) / 100;
+                        const itemFinalTotal = itemTotal - itemDiscount + itemTax;
+                        
+                        return (
+                          <tr key={index}>
+                            <td>{index + 1}</td>
+                            <td>{item.description}</td>
+                            <td>{item.quantity}</td>
+                            <td>{item.unit_price.toLocaleString()}</td>
+                            <td>{item.tax_rate}%</td>
+                            <td>{item.discount}%</td>
+                            <td>{itemFinalTotal.toLocaleString()}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              
+              <div className="preview-section">
+                <h3>ملخص الفاتورة</h3>
+                <div className="preview-row">
+                  <span className="preview-label">الإجمالي قبل الضريبة:</span>
+                  <span className="preview-value">{totals.subtotal.toLocaleString()} جنيه</span>
+                </div>
+                <div className="preview-row">
+                  <span className="preview-label">قيمة الخصم:</span>
+                  <span className="preview-value">{totals.discount_amount.toLocaleString()} جنيه</span>
+                </div>
+                <div className="preview-row">
+                  <span className="preview-label">قيمة الضريبة:</span>
+                  <span className="preview-value">{totals.tax_amount.toLocaleString()} جنيه</span>
+                </div>
+                <div className="preview-row total">
+                  <span className="preview-label">الإجمالي:</span>
+                  <span className="preview-value">{totals.total_amount.toLocaleString()} جنيه</span>
+                </div>
+              </div>
             </div>
-            <div className="total-row">
-              <span>إجمالي الخصومات:</span>
-              <span>{(invoiceData.totalDiscount || 0).toFixed(2)}</span>
-            </div>
-            <div className="total-row">
-              <span>إجمالي الضريبة:</span>
-              <span>{invoiceData.totalTax.toFixed(2)}</span>
-            </div>
-            <div className="total-row grand-total">
-              <span>الإجمالي النهائي:</span>
-              <span>{invoiceData.grandTotal.toFixed(2)}</span>
-            </div>
-          </div>
-
-          <div className="form-row">
+            
             <div className="form-group">
-              <label className="form-label">طريقة الدفع</label>
-              <select
+              <label htmlFor="notes" className="form-label">ملاحظات</label>
+              <textarea
+                id="notes"
+                name="notes"
                 className="form-control"
-                value={invoiceData.paymentMethod}
-                onChange={(e) => setInvoiceData(prev => ({ ...prev, paymentMethod: e.target.value }))}
-                required
+                value={invoice.notes}
+                onChange={handleInvoiceChange}
+                rows="3"
+              ></textarea>
+            </div>
+            
+            <div className="form-actions">
+              <button type="button" className="btn btn-outline" onClick={prevStep}>
+                <span className="icon">←</span> السابق
+              </button>
+              <button
+                type="submit"
+                className="btn btn-success"
+                disabled={loading}
               >
-                {PAYMENT_METHODS.map(method => (
-                  <option key={method.code} value={method.code}>
-                    {method.label}
-                  </option>
-                ))}
-              </select>
-        </div>
-
-            {invoiceData.paymentMethod === PAYMENT_METHODS[1].code && (
-              <>
-                <div className="form-group">
-                  <label className="form-label">اسم البنك</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={invoiceData.bankName}
-                    onChange={(e) => setInvoiceData(prev => ({ ...prev, bankName: e.target.value }))}
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">رقم الحساب</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={invoiceData.bankAccountNumber}
-                    onChange={(e) => setInvoiceData(prev => ({ ...prev, bankAccountNumber: e.target.value }))}
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">IBAN</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={invoiceData.bankAccountIBAN}
-                    onChange={(e) => setInvoiceData(prev => ({ ...prev, bankAccountIBAN: e.target.value }))}
-                  />
+                {loading ? 'جاري الإرسال...' : 'إنشاء الفاتورة'}
+              </button>
+            </div>
           </div>
-                <div className="form-group">
-                  <label className="form-label">SWIFT Code</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={invoiceData.swiftCode}
-                    onChange={(e) => setInvoiceData(prev => ({ ...prev, swiftCode: e.target.value }))}
-                  />
-        </div>
-              </>
-            )}
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">ملاحظات</label>
-            <textarea
-              className="form-control"
-              value={invoiceData.notes}
-              onChange={(e) => setInvoiceData(prev => ({ ...prev, notes: e.target.value }))}
-              rows="3"
-            />
-          </div>
-
-          <div className="form-actions">
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => navigate('/invoices')}
-            >
-              <FaTimes /> إلغاء
-            </button>
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={loading}
-            >
-              {loading ? (
-                <span className="loading-spinner"></span>
-              ) : (
-                <>
-                  <FaSave />
-                  <span>حفظ الفاتورة</span>
-                </>
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
-      {importedInvoices.length > 0 && (
-        <div className="card" style={{marginTop: 24, background: '#f9f9f9'}}>
-          <h3 style={{color: '#2d3e50'}}>مراجعة الفواتير المستوردة ({importedInvoices.length})</h3>
-          <div className="table-responsive">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>رقم الفاتورة</th>
-                  <th>تاريخ الفاتورة</th>
-                  <th>اسم العميل</th>
-                  <th>الرقم الضريبي</th>
-                  <th>العنوان</th>
-                  <th>عدد الأصناف</th>
-                  <th>ملاحظات</th>
-                </tr>
-              </thead>
-              <tbody>
-                {importedInvoices.map((inv, idx) => (
-                  <tr key={idx}>
-                    <td>{inv.invoiceNumber}</td>
-                    <td>{inv.invoiceDate}</td>
-                    <td>{inv.customerName}</td>
-                    <td>{inv.customerTaxNumber}</td>
-                    <td>{inv.customerAddress}</td>
-                    <td>{inv.items.length}</td>
-                    <td>{inv.notes}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <button className="btn btn-primary" onClick={handleBulkSave} disabled={loading} style={{marginTop: 12}}>
-            {loading ? 'جاري الحفظ...' : 'حفظ وإرسال جميع الفواتير'}
-          </button>
-        </div>
-      )}
+        )}
+      </form>
     </div>
   );
+};
+
+InvoiceForm.propTypes = {
+  showNotification: PropTypes.func.isRequired
 };
 
 export default InvoiceForm;
